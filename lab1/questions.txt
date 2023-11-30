@@ -1,0 +1,99 @@
+Warm-Up Exercises:
+
+A) The subsequent client lookups fail with a root hash mismatch.
+The client only knows that the server restarted because even valid lookups will return a root hash mismatch.
+This is because the server has restarted so its root is the hash of an empty tree structure whereas the client is looking for the original root hash before the server was killed.
+The client has to reset back to a clean starting state before the server and the client can be in sync after a server restart.
+The server and the client have to get back to a consistent state of looking for the same root hash to match.
+
+B) Subsequent client updates fail to execute after a server restart because the client is looking for the old root hash, but the server is looking for an empty hash.
+So there will be a root hash mismatch.
+If they didn't fail, then that would mean that the client is not validating proofs effectively.
+If this were the case then there are many possible things that could go wrong.
+For example, the client could just keep inserting key-value pairs into the tree without realizing anything is wrong.
+
+C) The proof has a length of 9. There are 8 empty bytestring siblings, and then the final sibling is the hash of the key-value pair (hello, world).
+This is surprising, as we might expect a proof of length 1 or 2. This means that the tree is not in its minimal shape.
+This is because of the way that the tree is structured, with inserts going left or right based on the prefix of traversal_path(key).
+We notice that the first 8 bits of traversal_path(b'foo') and traversal_path(b'hello') match, and they only differ on the 9th bit.
+This explains why the foo node is 8 deep, and has 8 b'' siblings in the proof before seeing the (hello, world) sibling.
+
+Attack 1:
+
+A) Because we are able to see the implementation of this authentication scheme, we can exploit weaknesses that we find.
+We can see that after just one key-value pair is inserted into the tree, the root hash will be the hash of the concatenation of key, value.
+This can be observed by looking at the interaction of client.py, store.py, and common.py.
+After observing this, it is easy to see that if we know that the singular key-value pair that the client inserted, we can trick the client.
+In this situation, the client will accept any key-value pair that hashes to the same as its inserted one (i.e., the root hash).
+This includes different subdivisions of the original pair.
+For example, the client inserts (hello, world). This makes the root hash equal to hash of "helloworld".
+Thus, as the adversary, we can produce the fake key-value pair (hell, oworld).
+We know that the get command will succeed on the client, even though that pair does not exist.
+(hell, oworld) and (hello, world) hash to the same root hash, so the client will validate the proof and the lookup will succeed with this key.
+
+
+Attack 2:
+
+A) As the adversary, we want to be able to just insert a single (key, value) pair and then have at least 1000 distinct key-value lookups succeed.
+We can create our own private Store object to manipulate as needed in this process.
+One weakness in this authentication scheme is that we can choose what key-value pair to give to the client.
+Effectively, this means that we have the power of choosing the root hash.
+If we choose a convenient root hash, this will allow us to fool the client into thinking that all of our keys exist.
+The weakness is as follows. We insert the same 1,024 keys that we will request later into our private Store object.
+Then, we know the root hash of this tree. We can insert this root hash into the client.
+In practice, this looks like inserting the two children of the root of our Store tree as the key value pair.
+Now, the root hash in the client will match the root hash in our Store.
+Then, when we try and run the get command on the client with our keys that we've inserted into the Store, we provide a proof from Store.
+This proof will succeed because the root hash matches the client (as we set up with the initial key-value insert), so the client's call to validate will pass.
+Then, we can lookup the key on our Store which will succeed, because we have already inserted all of the keys that we will lookup.
+This exploit will hold for all of the 1024 keys, as we previously inserted them into the Store's tree and we know the client and Store's root hashes match.
+
+
+Attack 3:
+
+A) The purpose of this attack is to fool the client into believing that 1000 keys that had previously been inserted are missing from the tree.
+The way that this attack works is by creating a fake proof. We must abide by the constraint that our fake proof only has one sibling in it.
+First, we will retrieve the clean proof from the Store object. Then, the general approach will be to use the siblings to precompute the root hash and pass it to a lookup as a key.
+Then, because our root hash matches, the client's validation will pass but since the key we are searching for is not equal to a key in the client's tree.
+Thus, the fake proof will be valid but the lookup will return that the key is not in the tree.
+To explain it in more detail, for every key lookup, we first obtain the proof from clean client.
+Then, from this, we know all the siblings. We can compute the hash of the key, value, and its siblings iteratively to step by step get closer to the root hash.
+When we are one step away from the root we stop and put the final sibling into our fake proof's siblings list.
+We must also stop before we hash the new key with the penultimate sibling, in order to get to the root hash and not one hash later than the root.
+As an aside, we have to be careful about the path and which order we hash the penultimate sibling with the new key.
+In this attack, we are exploiting our knowledge of how the root hash is calculated and checked from a given key to precompute the hashes that we want.
+In this way we are creating a fake proof that has only one sibling, that will pass the check and hash to root hash stored by the client.
+The proof will validate. However, since our key is not a key that is actually in the tree, but in fact, a bytes object of the requested key
+hashed over and over again with the clean proof's siblings, the lookup will return that the key is not in the tree.
+Because we are able to act as an adversarial store, we can manipulate the Store's lookup to provide a fake proof that passes the client's check but returns None.
+
+
+Attack 4 (Optional/Extra Credit):
+
+A)
+
+Security Definition:
+
+A) Suppose that a client (not the adversary) performs some set of key-value puts.
+The client is secure if, when it performs a subsequent get of any value against a store controlled by a computationally-bounded adversary,
+it will either return the same result that it would have gotten from the correct store, or raise an exception.
+In this case, we can define a correct store as one that provides data integrity assurance.
+This means that this store can hold and retrieve data without modification from when they were originally inserted.
+It can also provide authentication of the data stored in the tree, and allows only authorized clients can write to it.
+The correct store should also be able to provide proofs of absence for requested keys.
+Generally, the correct store should have integrity and authentication and an adversary should not be able to tamper with the Merkle tree structure.
+Also, we will further clarify the bounds of the powers of the adversary.
+We assume that our adversary is computationally-bounded, and that it cannot insert key-value puts, nor can it coerce the client into doing so either.
+Our expanded security definition will be that the client is secure if a computationally-bound adversary acts in the
+same way as the store as described above (or error).
+
+B) One way we could change the implementation of the authentication scheme to address Attack scenario 1 would be to hash,
+along with the concatenation of the (key, value) pair, the length of the key. This would avoid attacks like those in scenario 1 from happening,
+as the lengths of the fake key and the true key would not match and so just the concatenation of the key and the value would not be enough.
+One way we could change the implementation to address Attack scenario 2 and 3 would be to store in the client information about the size of the tree, which will be the depth.
+Because we are just storing an additional small and consant amount of information about the tree, this is feasible to also have the client keep track of.
+This is also useful because the proofs that the Store object provides implicitly has information about the depth of the tree.
+The length of the siblings list helps the client validate that the Store has a correct proof, because that gives us the depth of the tree.
+So, if we also keep this information in the client, this will prevent attacks like scenario 2 and 3 where the adversary is giving tampered-with proofs
+and fooling the client into thinking there is a different structure tree than there really is. This is assuming, as it is in this implementation,
+that the implementation of the tree is binary as we are assuming the depth gives us meaningful information about the size of the tree.

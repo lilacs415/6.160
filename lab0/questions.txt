@@ -1,0 +1,39 @@
+Question 1:
+
+A) Because the adversary might be able to brute force try and guess the password (particularly if they know common passwords the user uses from other breaches), and it adds an extra layer of security to important private information.
+
+B) As there might be newer and stronger hash functions, this allows for newer users to have better security.
+This also allows for different users with different security concerns, as they can use the hash function that best fits their needs.
+Using distinct hash functions between users also increases security in the sense that if one user's hashed password is compromised, it is less likely for another user's to also become compromised as well.
+
+C) Iterating a hash function brings a security benefit because when you iterate a hash function d times, it makes it take d times longer to evaluate the new (iterated) hash function compared to the original one.
+
+D) If I were using PBKDF2 to protect passwords for authenticating a popular web service, I would set the iteration count to be high.
+This is because this increases the computational effort required to derive the key, and while it is also more computationally expensive, a popular web service likely has access to the necessary resources for it.
+To ballpark a specific iteration count, I might do 600,000 as recommended by OWASP for 2023.
+
+E) Meanwhile, if I were using PBKDF2 to protect passwords for my laptop, I would set the iteration count much lower.
+This is because I don't consider my passwords to have extremely high security needs as compared to a popular web service, and it makes key derivation easier.
+Again, to ballpark, I might use an iteration count of 300,000.
+
+Question 2:
+
+B) If a user randomly choose a string of 20 letters, this means there are 26^20 or about 1.99e28 possible passwords.
+Because the password is uniformly random, this means that on average, it will take 26^20/2=9.8e27 guesses to recover their password. 
+
+D) If each password were hashed with a unique salt, the cost of a preimage-finding attack would increase astronomically.
+This is because instead of brute-force trying a bunch of possible passwords, which already is not very efficient, the attacker would need to try all salts for each possible password.
+On top of that, the length of the salt and the characters in the salt might not be known, which only further exponentially increases the cost of a preimage-finding attack when passwords are hashed with salts.
+
+Question 4:
+
+A) First, to detect a cycle, one can start from an arbitrary string. Then, there can be two pointers.
+One moves at double the rate of the other. If these pointers are ever equal, then we know that there is a cycle.
+This is because that must mean that the pointers are looping around, but at different rates. This takes up constant storage.
+This is because instead of storing every single hash value that we ever see, we only need to store these two pointers.
+Next, once we have the cycle, we can guarantee that the collision must occur somewhere between where we began and where we detected the cycle.
+We know this because a collision occurs when two separate values hash to the same thing, and this occurs at the entry point to the cycle.
+If we began in the cycle, then we went around it once and definitely passed the collision point.
+If we did not, then we must have entered the cycle at the collision point. So once the cycle is detected, we can backtrack from the beginning value.
+From there, we can check at each step (from start to detection point) if we are at the collision point.
+This process finds a collision in H while using constant storage (namely, the pointers as well as the beginning value).

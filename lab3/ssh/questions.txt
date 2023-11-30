@@ -1,0 +1,34 @@
+Question 1:
+
+A) The MAC that has better performance for encrypting files larger than 1MB is AES-128-GMAC.
+This is in part because AES can use parallel processing so it likely has better performance.
+hmac(sha256) for 3s on 16384 size blocks got 70602 hmac(sha256)'s,
+and doing AES-256-GCM for 3s on 16384 size blocks got 623208 AES-256-GCM's.
+So this empirical evidence that AES is better.
+
+B) Switching from AES-128 encryption to AES-256 encryption will impact the time it takes to encrypt a 100MB file by about 40-50%.
+The encryption process time is primarily determined by the key length, and AES-256 will be slower than AES-128 due to the additional computational overhead.
+The exact time increase will depend on the specific hardware and software used, but it's generally expected to be roughly 40-50% slower,
+so encrypting a 100MB file may take approximately 40-50% as long.
+This is in part because AES128 takes 10 rounds while AES256 uses 14 rounds.
+
+C)
+
+i)
+RSA: 3072 bits.
+DSA: 3072 bits.
+ECDSA: 256 bits.
+
+ii) Fastest: ECDSA, with 389195 signatures/10 seconds. Slowest: RSA, with 14844 signatures/10 seconds.
+DSA had 35386 signatures/10 seconds.
+
+iii) Fastest: RSA, with 503986 verifications/10 seconds. Slowest: DSA, with 40593 verifications/10 seconds.
+ECDSA had 132945 verifications/10 seconds.
+
+iv) RSA is slowest because it involves more complex mathematical operations to generate the keypairs.
+ECDSA is typically fastest because it requires the shortest keylength to have 128-bit security out of all three algorithms.
+
+D) I would use a slower hash function, and additionally I would use a salt to store
+the hashed passwords and usernames to make it more secure to rainbow table attacks.
+I might use a more specialized hash function such as bcrypt, scrypt, or Argon2 for this purpose.
+These are password hash functions that are made to be more suited to this particular use case.

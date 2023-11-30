@@ -1,0 +1,42 @@
+Problem 1:
+
+B) 16, 32, 256 bytes. We consider "secure" to be 2^lambda where lambda is 128 in practice. Since the sampling is from /dev/random,
+the guesses it will take to generate the ECDSA keypair is 2^(number of bits). 4 bytes is not enough bits to have
+128-bit security, but 16, 32, and 256 bytes are enough bits to cause the adversary to have to make 2^128 guesses in order to find the keypair.
+
+Problem 2:
+
+A) Because we know the formula by which the ECDSA signatures are calculated, we can find the secret key.
+If two signature pairs use the same secret key and nonce, we can create two equations for each signature using the known formula.
+Then, we solve for the nonce in both equations. We can set them equal to each other because we know they used the same nonce.
+Now, because we know that both signatures used the same secret key, we can use that equation to solve for the secret key.
+The secret key will then be in terms of r1, s1, Hm1, and Hm2, which we are given.
+We also need to be careful about the modular arithmetic. In the resulting formula, we must add a mod q in the denominator
+and to the full expression. This is because we need to make sure that they never get above q, the order of the NIST curve.
+This allows us to recover the secret key.
+
+C) After an attacker obtains 2^64 BadECDSA signatures, it can recover the secret key with constant probability.
+This is because of the attack we implemented above. The nonce is selected from range {1, 2, ..., q-1} with the
+intention that it is highly unlikely that the same nonce is used twice. As we see in the 2b attack, if the same
+nonce is used, the secret key can be recovered. After the attacker sees 2^64 signatures, by the birthday paradox,
+they will be able to recover the secret key with constant probability. Thus, BadECDSA has at most 64-bit security.
+
+Problem 3:
+
+A) It takes 2312 bytes * (8 bits/1 byte) * (1 megabit/1e6 bit) * (1 second/11 megabits) * (2^24 possible IVs) ~ 28210 seconds.
+This is about 7.8 hours, which is not that long if an attacker is particularly trying to target someone's wifi network.
+Using the birthday paradox, it is also likely that the attacker will see the same IV twice after 2^12 packets sent,
+which is even less secure and would take even less time to achieve.
+Because the beginning of the key is a long-term secret, the attacker can assume that it's always held constant.
+So, once they see the same IV twice, the attacker can recover the key k, the keystream produced by RC4(k), and
+by extension, the message.
+
+Extra Credit:
+
+A)
+
+
+B)
+
+
+C)
