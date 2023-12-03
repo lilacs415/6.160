@@ -12,15 +12,15 @@ class encoder:
 
     def encode_int(self, x):
         if x >= 0:
-            if x <= 2**7:
-                self.buf.append(x)
-            elif x <= 2**8:
+            if x <= 2**7-1:
+                self.buf.extend(struct.pack('>B', x))
+            elif x <= 2**8-1:
                 self.buf.append(0xcc)
                 self.buf.extend(struct.pack('>I', x))
-            elif x <= 2**16:
+            elif x <= 2**16-1:
                 self.buf.append(0xcd)
                 self.buf.extend(struct.pack('>H', x))
-            elif x <= 2**32:
+            elif x <= 2**32-1:
                 self.buf.append(0xce)
                 self.buf.extend(struct.pack('>L', x))
             elif x <= 2**64:
@@ -29,32 +29,30 @@ class encoder:
             else:
                 raise UnsupportedValueException(x)
         else:
-            if x > -2**5:
-                self.buf.extend(struct.pack('>i', x))
-            elif x > -2**7:
+            if x >= -2**5:
+                self.buf.extend(struct.pack('>b', x))
+            elif x >= -2**7:
                 self.buf.append(0xd0)
                 self.buf.extend(struct.pack('>i', x))
-            elif x > -2**15:
+            elif x >= -2**15:
                 self.buf.append(0xd1)
                 self.buf.extend(struct.pack('>h', x))
-            elif x > -2**31:
+            elif x >= -2**31:
                 self.buf.append(0xd2)
                 self.buf.extend(struct.pack('>l', x))
-            elif x > -2**63:
+            elif x >= -2**63:
                 self.buf.append(0xd3)
                 self.buf.extend(struct.pack('>q', x))
             else:
                 raise UnsupportedValueException(x)
     
     def encode_float(self, x):
-        if x <= 2**5:
-            self.buf.append(0xca)
-            self.buf.extend(struct.pack('d', x))
-        elif x <= 2**9:
-            self.buf.append(0xcb)
-            self.buf.extend(struct.pack('d', x))
-        else:
-            raise UnsupportedValueException(x)
+        # print('x here', x is float('nan'))
+        # if -2**63 < x < 2**63 or x == float('inf') or x == float('nan'):
+        self.buf.append(0xcb)
+        self.buf.extend(struct.pack('>d', x))
+        # else:
+            # raise UnsupportedValueException(x)
     
     def encode_bool(self, x):
         if not x:
@@ -82,13 +80,13 @@ class encoder:
 
     def encode_bytes(self, x):
         n = len(x)
-        if n <= 2**8:
+        if n <= 2**8-1:
             self.buf.append(0xc4)
             self.buf.extend(struct.pack('>I', n))
-        elif n <= 2**16:
+        elif n <= 2**16-1:
             self.buf.append(0xc5)
             self.buf.extend(struct.pack('>H', n))
-        elif n <= 2**32:
+        elif n <= 2**32-1:
             self.buf.append(0xc6)
             self.buf.extend(struct.pack('>L', n))
         else:
@@ -262,9 +260,9 @@ class decoder:
         if 0x00 <= b < 0x7f or 0xe0 <= b < 0xff:
             return self.decode_fixint(b)
         elif b == 0xca:
-            return self.decode_float(b, 'd')
+            return self.decode_float(b, '>f')
         elif b == 0xcb:
-            return self.decode_float(b, 'd')
+            return self.decode_float(b, '>d')
         elif b == 0xcc:
             return self.decode_uint(b, '>I')
         elif b == 0xcd:
