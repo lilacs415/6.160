@@ -21,15 +21,48 @@ alphanumeric = (string.ascii_letters + string.digits).encode('ascii')
 #   modulo things that might have gotten cut off at each end.
 
 def encode(input):
-    return input
+    data = bytearray(input)
+    buffer = bytearray()
+    for byte in data:
+        if byte in printable:
+            print(byte)
+            buffer.append(byte)
+        else:
+            # buffer.append(printable[byte % len(printable)])
+            buffer.extend(b"!" + bytes([byte // 16, byte % 16]) + b"!")
+
+    return bytes(buffer)
 
 def decode(buf):
-    return buf
+    # output = bytearray()
+    # for byte in buf:
+    #     if byte in printable:
+    #         output.append(byte)
+    #     else:
+    #         index = printable.index(byte)
+    #         output.append(index)
+
+    # return bytes(output)
+
+    output = bytearray()
+    i = 0
+    
+    while i < len(buf):
+        if buf[i] == ord("!") and i + 3 <= len(buf):
+            decoded_byte = buf[i + 1] * 16 + buf[i + 2]
+            output.append(decoded_byte)
+            i += 4
+        else:
+            output.append(buf[i])
+            i += 1
+    return bytes(output)
 
 def encode_and_decode(i):
     enc = encode(i)
     dec = decode(enc)
     print(i, "->", enc, "->", dec)
 
-encode_and_decode(b"hello world")
-encode_and_decode(b"\x00\x01\x02\x03")
+# print(encode(b"hello world"))
+# encode_and_decode(b"hello world")
+# encode_and_decode(b"\x00\x01\x02\x03")
+encode_and_decode(b"\n")

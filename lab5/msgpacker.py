@@ -91,10 +91,10 @@ class encoder:
             self.buf.append(0x80 + n)
         elif n < 2**16:
             self.buf.append(0xde)
-            self.buf.append(struct.pack('>H', n))
+            self.buf.extend(struct.pack('>H', n))
         elif n < 2**32:
             self.buf.append(0xdf)
-            self.buf.extend(struct.pack('>L', n))
+            self.buf.extend(struct.pack('>I', n))
         else:
             raise UnsupportedValueException(x)
         for k, v in x.items():
@@ -113,7 +113,7 @@ class encoder:
             self.buf.extend(struct.pack('>H', n))
         elif n < 2**32:
             self.buf.append(0xdd)
-            self.buf.extend(struct.pack('>L', n))
+            self.buf.extend(struct.pack('>I', n))
         else:
             raise UnsupportedValueException(x)
         for v in x:
@@ -198,16 +198,16 @@ class decoder:
         return self.get(blen)
 
     def decode_dict(self, b):
-        if 0x80 <= b < 0x8f:
+        if 0x80 <= b <= 0x8f:
             dlen = b - 0x80
         elif b == 0xde:
             dlen = self.unpack_one('>H')
         elif b == 0xdf:
-            dlen = self.unpack_one('>L')
+            dlen = self.unpack_one('>I')
         else:
             raise BadEncodingException(b)
         d = {}
-        for _ in range(0, dlen):
+        for _ in range(dlen):
             k = self.decode()
             v = self.decode()
             try:
@@ -222,18 +222,19 @@ class decoder:
         return None
 
     def decode_array(self, b):
-        if 0x90 <= b < 0x9f:
+        if 0x90 <= b <= 0x9f:
             alen = b - 0x90
         elif b == 0xdc:
             alen = self.unpack_one('>H')
         elif b == 0xdd:
-            alen = self.unpack_one('>L')
+            alen = self.unpack_one('>I')
         else:
             raise BadEncodingException(b)
         l = []
-        for _ in range(0, alen):
+        for _ in range(alen):
             v = self.decode()
             l.append(v)
+        # return l
         return tuple(l)
 
     def decode_fixint(self, b):
@@ -268,9 +269,9 @@ class decoder:
             return self.decode_str(b)
         elif b in (0xc4, 0xc5, 0xc6):
             return self.decode_bytes(b)
-        elif 0x80 <= b < 0x8f or b in (0xde, 0xdf):
+        elif 0x80 <= b <= 0x8f or b in (0xde, 0xdf):
             return self.decode_dict(b)
-        elif 0x90 <= b < 0x9f or b in (0xdc, 0xdd):
+        elif 0x90 <= b <= 0x9f or b in (0xdc, 0xdd):
             return self.decode_array(b)
         elif b == 0xc0:
             return self.decode_nil(b)
