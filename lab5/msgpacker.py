@@ -45,7 +45,7 @@ class encoder:
                 self.buf.extend(struct.pack('>q', x))
             else:
                 raise UnsupportedValueException(x)
-    
+
     def encode_bool(self, x):
         if not x:
             self.buf.append(0xc2)
@@ -136,8 +136,6 @@ class encoder:
                 self.encode_bool(x)
             case int():
                 self.encode_int(x)
-            case float():
-                self.encode_float(x)
             case _:
                 raise UnsupportedValueException(x)
 
@@ -246,7 +244,7 @@ class decoder:
 
     def decode(self):
         b = self.get(1)[0]
-        if 0x00 <= b < 0x7f or 0xe0 <= b < 0xff:
+        if 0x00 <= b <= 0x7f or 0xe0 <= b <= 0xff:
             return self.decode_fixint(b)
         elif b == 0xcc:
             return self.decode_uint(b, '>I')
@@ -278,3 +276,4 @@ class decoder:
             return self.decode_nil(b)
         else:
             raise BadEncodingException('unhandled type', b)
+        
