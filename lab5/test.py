@@ -24,7 +24,6 @@ def test_str(data):
     res = enc.get_buf()
 
     dec = msgpacker.decoder(res)
-    print(out)
     assert out == dec.decode(), 'wrong'
 
 # def correct_str(data):

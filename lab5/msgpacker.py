@@ -12,18 +12,18 @@ class encoder:
 
     def encode_int(self, x):
         if x >= 0:
-            if x <= 2**7-1:
+            if x < 2**7:
                 self.buf.extend(struct.pack('>B', x))
-            elif x <= 2**8-1:
+            elif x < 2**8:
                 self.buf.append(0xcc)
                 self.buf.extend(struct.pack('>I', x))
-            elif x <= 2**16-1:
+            elif x < 2**16:
                 self.buf.append(0xcd)
                 self.buf.extend(struct.pack('>H', x))
-            elif x <= 2**32-1:
+            elif x < 2**32:
                 self.buf.append(0xce)
                 self.buf.extend(struct.pack('>L', x))
-            elif x <= 2**64-1:
+            elif x < 2**64:
                 self.buf.append(0xcf)
                 self.buf.extend(struct.pack('>Q', x))
             else:
@@ -55,30 +55,30 @@ class encoder:
     def encode_str(self, x):
         sbytes = x.encode('utf-8')
         n = len(sbytes)
-        if n <= 2**5-1:
+        if n < 2**5:
             self.buf.append(0xa0 + n)
-        elif n <= 2**8-1:
+        elif n < 2**8:
             self.buf.append(0xd9)
-            self.buf.extend(struct.pack('>I', n))
-        elif n <= 2**16-1:
+            self.buf.extend(struct.pack('>B', n))
+        elif n < 2**16:
             self.buf.append(0xda)
             self.buf.extend(struct.pack('>H', n))
-        elif n <= 2**32-1:
+        elif n < 2**32:
             self.buf.append(0xdb)
-            self.buf.extend(struct.pack('>L', len(sbytes)))
+            self.buf.extend(struct.pack('>L', n))
         else:
             raise UnsupportedValueException(x)
         self.buf.extend(sbytes)
 
     def encode_bytes(self, x):
         n = len(x)
-        if n <= 2**8-1:
+        if n < 2**8:
             self.buf.append(0xc4)
             self.buf.extend(struct.pack('>I', n))
-        elif n <= 2**16-1:
+        elif n < 2**16:
             self.buf.append(0xc5)
             self.buf.extend(struct.pack('>H', n))
-        elif n <= 2**32-1:
+        elif n < 2**32:
             self.buf.append(0xc6)
             self.buf.extend(struct.pack('>L', n))
         else:
@@ -87,12 +87,12 @@ class encoder:
 
     def encode_dict(self, x):
         n = len(x)
-        if n <= 2**4-1:
+        if n < 2**4:
             self.buf.append(0x80 + n)
-        elif n <= 2**16-1:
+        elif n < 2**16:
             self.buf.append(0xde)
             self.buf.append(struct.pack('>H', n))
-        elif n <= 2**32-1:
+        elif n < 2**32:
             self.buf.append(0xdf)
             self.buf.extend(struct.pack('>L', n))
         else:
@@ -106,12 +106,12 @@ class encoder:
 
     def encode_array(self, x):
         n = len(x)
-        if n <= 2**4-1:
+        if n < 2**4:
             self.buf.append(0x90 + n)
-        elif n <= 2**16-1:
+        elif n < 2**16:
             self.buf.append(0xdc)
             self.buf.extend(struct.pack('>H', n))
-        elif n <= 2**32-1:
+        elif n < 2**32:
             self.buf.append(0xdd)
             self.buf.extend(struct.pack('>L', n))
         else:
@@ -170,11 +170,11 @@ class decoder:
         return b == 0xc3
 
     def decode_str(self, b):
-        if 0xa0 <= b < 0xbf:
+        if 0xa0 <= b <= 0xbf:
             strlen = b - 0xa0
-        elif b == 0xda:
-            strlen = self.unpack_one('>I')
         elif b == 0xd9:
+            strlen = self.unpack_one('>B')
+        elif b == 0xda:
             strlen = self.unpack_one('>H')
         elif b == 0xdb:
             strlen = self.unpack_one('>L')
@@ -264,7 +264,7 @@ class decoder:
             return self.decode_int(b, '>q')
         elif b in (0xc2, 0xc3):
             return self.decode_bool(b)
-        elif 0xa0 <= b < 0xbf or b in (0xd9, 0xda, 0xdb):
+        elif 0xa0 <= b <= 0xbf or b in (0xd9, 0xda, 0xdb):
             return self.decode_str(b)
         elif b in (0xc4, 0xc5, 0xc6):
             return self.decode_bytes(b)
