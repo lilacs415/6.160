@@ -25,32 +25,30 @@ def encode(input):
     buffer = bytearray()
     for byte in data:
         if byte in printable:
-            print(byte)
             buffer.append(byte)
         else:
             # buffer.append(printable[byte % len(printable)])
-            buffer.extend(b"!" + bytes([byte // 16, byte % 16]) + b"!")
+            # print(bytes([printable[byte // 16], printable[byte % 16]]))
+            # print( bytes([byte // 16, byte % 16]))
+            # buffer.extend(b"!" + bytes([byte // 16, byte % 16]) + b"!")
+            # buffer.extend(b"!" + bytes([printable[byte // 16], printable[byte % 16]]) + b"!")
+            # print(bytes.fromhex(printable[byte // 16]))
+            # print(printable)
+            buffer.extend(b"!" + bytes([printable[byte // 16], printable[byte % 16]]) + b"!")
+
 
     return bytes(buffer)
 
 def decode(buf):
-    # output = bytearray()
-    # for byte in buf:
-    #     if byte in printable:
-    #         output.append(byte)
-    #     else:
-    #         index = printable.index(byte)
-    #         output.append(index)
-
-    # return bytes(output)
-
     output = bytearray()
     i = 0
     
     while i < len(buf):
         if buf[i] == ord("!") and i + 3 <= len(buf):
-            decoded_byte = buf[i + 1] * 16 + buf[i + 2]
-            output.append(decoded_byte)
+            hex_str = chr(buf[i+1]) + chr(buf[i+2])
+            print(hex_str)
+            decoded_byte = bytes.fromhex(hex_str)
+            output.extend(decoded_byte)
             i += 4
         else:
             output.append(buf[i])
@@ -60,9 +58,11 @@ def decode(buf):
 def encode_and_decode(i):
     enc = encode(i)
     dec = decode(enc)
+    print(len(i), len(enc), len(dec))
     print(i, "->", enc, "->", dec)
 
-# print(encode(b"hello world"))
+# print(encode(b"\n"))
 # encode_and_decode(b"hello world")
 # encode_and_decode(b"\x00\x01\x02\x03")
-encode_and_decode(b"\n")
+encode_and_decode(b" ")
+encode_and_decode(b"\n!\n")
