@@ -24,10 +24,10 @@ def encode(input):
     data = bytearray(input)
     buffer = bytearray()
     for byte in data:
-        if byte in printable:
+        if byte in alphanumeric:
             buffer.append(byte)
         else:
-            buffer.extend(b"!" + bytes([printable[byte // 16], printable[byte % 16]]) + b"!")
+            buffer.extend(b"!" + bytes([printable[byte // 16], printable[byte % 16]]))
 
 
     return bytes(buffer)
@@ -37,12 +37,12 @@ def decode(buf):
     i = 0
     
     while i < len(buf):
-        if buf[i] == ord("!") and i + 3 <= len(buf):
+        if buf[i] == ord("!") and i + 2 <= len(buf):
             hex_str = chr(buf[i+1]) + chr(buf[i+2])
             print('hex_str', hex_str)
             decoded_byte = bytes.fromhex(hex_str)
             output.extend(decoded_byte)
-            i += 4
+            i += 3
         else:
             output.append(buf[i])
             i += 1
@@ -58,4 +58,4 @@ def encode_and_decode(i):
 # encode_and_decode(b"hello world")
 # encode_and_decode(b"\x00\x01\x02\x03")
 # encode_and_decode(b" ")
-encode_and_decode(b"\n")
+encode_and_decode(b"\n!\n\n")

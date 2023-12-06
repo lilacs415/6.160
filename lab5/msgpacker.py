@@ -16,7 +16,7 @@ class encoder:
                 self.buf.extend(struct.pack('>B', x))
             elif x < 2**8:
                 self.buf.append(0xcc)
-                self.buf.extend(struct.pack('>I', x))
+                self.buf.extend(struct.pack('>B', x))
             elif x < 2**16:
                 self.buf.append(0xcd)
                 self.buf.extend(struct.pack('>H', x))
@@ -33,7 +33,7 @@ class encoder:
                 self.buf.extend(struct.pack('>b', x))
             elif x >= -2**7:
                 self.buf.append(0xd0)
-                self.buf.extend(struct.pack('>i', x))
+                self.buf.extend(struct.pack('>b', x))
             elif x >= -2**15:
                 self.buf.append(0xd1)
                 self.buf.extend(struct.pack('>h', x))
@@ -235,7 +235,6 @@ class decoder:
             v = self.decode()
             l.append(v)
         return l
-        return tuple(l)
 
     def decode_fixint(self, b):
         if b < 0x80:
@@ -248,7 +247,7 @@ class decoder:
         if 0x00 <= b <= 0x7f or 0xe0 <= b <= 0xff:
             return self.decode_fixint(b)
         elif b == 0xcc:
-            return self.decode_uint(b, '>I')
+            return self.decode_uint(b, '>B')
         elif b == 0xcd:
             return self.decode_uint(b, '>H')
         elif b == 0xce:
@@ -256,7 +255,7 @@ class decoder:
         elif b == 0xcf:
             return self.decode_uint(b, '>Q')
         elif b == 0xd0:
-            return self.decode_int(b, '>i')
+            return self.decode_int(b, '>b')
         elif b == 0xd1:
             return self.decode_int(b, '>h')
         elif b == 0xd2:

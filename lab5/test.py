@@ -7,7 +7,7 @@ with atheris.instrument_imports():
 
 def test_int(data):
     fuzzer = atheris.FuzzedDataProvider(data)
-    out = fuzzer.ConsumeInt(8)
+    out = fuzzer.ConsumeIntInRange(-(2**63), 2**32-1)
 
     enc = msgpacker.encoder()
     enc.encode(out)
@@ -46,7 +46,7 @@ def test_dict(data):
     options = [out_int, out_str, out_byte]
 
     out = {}
-    for _ in range(random.randint(0, 15)):
+    for _ in range(random.randint(0, 2**16-1)):
         out[random.choice(options)] = random.choice(options)
 
     enc = msgpacker.encoder()
@@ -75,6 +75,6 @@ def test_array(data):
     assert out == dec.decode(), 'wrong'
 
 if __name__ == "__main__":
-    test = test_dict
+    test = test_int
     atheris.Setup(sys.argv, test)
     atheris.Fuzz()
