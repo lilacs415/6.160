@@ -27,13 +27,6 @@ def encode(input):
         if byte in printable:
             buffer.append(byte)
         else:
-            # buffer.append(printable[byte % len(printable)])
-            # print(bytes([printable[byte // 16], printable[byte % 16]]))
-            # print( bytes([byte // 16, byte % 16]))
-            # buffer.extend(b"!" + bytes([byte // 16, byte % 16]) + b"!")
-            # buffer.extend(b"!" + bytes([printable[byte // 16], printable[byte % 16]]) + b"!")
-            # print(bytes.fromhex(printable[byte // 16]))
-            # print(printable)
             buffer.extend(b"!" + bytes([printable[byte // 16], printable[byte % 16]]) + b"!")
 
 
@@ -46,7 +39,7 @@ def decode(buf):
     while i < len(buf):
         if buf[i] == ord("!") and i + 3 <= len(buf):
             hex_str = chr(buf[i+1]) + chr(buf[i+2])
-            print(hex_str)
+            print('hex_str', hex_str)
             decoded_byte = bytes.fromhex(hex_str)
             output.extend(decoded_byte)
             i += 4
@@ -64,5 +57,5 @@ def encode_and_decode(i):
 # print(encode(b"\n"))
 # encode_and_decode(b"hello world")
 # encode_and_decode(b"\x00\x01\x02\x03")
-encode_and_decode(b" ")
-encode_and_decode(b"\n!\n")
+# encode_and_decode(b" ")
+encode_and_decode(b"\n")

@@ -74,7 +74,7 @@ class encoder:
         n = len(x)
         if n < 2**8:
             self.buf.append(0xc4)
-            self.buf.extend(struct.pack('>I', n))
+            self.buf.extend(struct.pack('>B', n))
         elif n < 2**16:
             self.buf.append(0xc5)
             self.buf.extend(struct.pack('>H', n))
@@ -188,7 +188,7 @@ class decoder:
 
     def decode_bytes(self, b):
         if b == 0xc4:
-            blen = self.unpack_one('>I')
+            blen = self.unpack_one('>B')
         elif b == 0xc5:
             blen = self.unpack_one('>H')
         elif b == 0xc6:
@@ -234,7 +234,7 @@ class decoder:
         for _ in range(alen):
             v = self.decode()
             l.append(v)
-        # return l
+        return l
         return tuple(l)
 
     def decode_fixint(self, b):
